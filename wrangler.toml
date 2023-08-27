@@ -1,0 +1,8 @@
+name = "daily-discord-bot" # todo
+main = "./src/index.ts"
+compatibility_date = "2022-05-03"
+
+[triggers]
+# 11:00 UTC+8
+crons = ["0 3 * * *"]
+
