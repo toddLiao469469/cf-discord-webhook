@@ -13,7 +13,8 @@ function getRandomDateInRange(minDate: Date, maxDate: Date): Date {
 const formateResponse = (data: unknown): Posts[] => {
 	return data.results.map((result: unknown) => ({
 		name: result.properties.Name.title[0].plain_text,
-		url: result.properties.URL.url,
+		url: result.url,
+		originUrl: result.properties.URL.url,
 		tags: result.properties.Tags.multi_select.map((item: unknown) => item.name),
 	}));
 };
