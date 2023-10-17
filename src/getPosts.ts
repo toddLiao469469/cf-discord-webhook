@@ -1,5 +1,7 @@
-import { Posts } from './lib/types';
 import { Client } from '@notionhq/client';
+import { Effect, pipe } from 'effect';
+
+import { Posts } from './lib/types';
 
 function getRandomDateInRange(minDate: Date, maxDate: Date): Date {
 	const minTimestamp = minDate.getTime();
@@ -9,6 +11,13 @@ function getRandomDateInRange(minDate: Date, maxDate: Date): Date {
 
 	return new Date(randomTimestamp);
 }
+
+const randomStartDate = pipe(
+	[new Date('2020-01-01'), new Date()] satisfies [Date, Date],
+	([minDate, maxDate]) => getRandomDateInRange(minDate, maxDate)
+);
+
+const randomEndDate = pipe(randomStartDate, date => getRandomDateInRange(date, new Date()));
 
 const formateResponse = (data: unknown): Posts[] => {
 	return data.results.map((result: unknown) => ({
@@ -20,32 +29,35 @@ const formateResponse = (data: unknown): Posts[] => {
 };
 
 const getPosts = async (token: string, dataBaseId: string) => {
-	const minDate = new Date('2020-01-01');
-	const maxDate = new Date();
-
-	const randomStartDate = getRandomDateInRange(minDate, maxDate);
-	const randomEndDate = getRandomDateInRange(randomStartDate, maxDate);
-	const notion = new Client({
-		auth: token,
-	});
-	const myPages = await notion.databases.query({
-		database_id: dataBaseId,
-		filter: {
-			property: 'Created',
-			date: {
-				after: randomStartDate.toISOString(),
-				before: randomEndDate.toISOString(),
-			},
-		},
-		page_size: 3,
-		sorts: [
-			{
-				property: 'Created',
-				direction: 'descending',
-			},
-		],
-	});
-	return formateResponse(myPages);
+	return pipe(
+		new Client({
+			auth: token,
+		}),
+		client =>
+			Effect.tryPromise({
+				try: () =>
+					client.databases.query({
+						database_id: dataBaseId,
+						filter: {
+							property: 'Created',
+							date: {
+								after: randomStartDate.toISOString(),
+								before: randomEndDate.toISOString(),
+							},
+						},
+						page_size: 3,
+						sorts: [
+							{
+								property: 'Created',
+								direction: 'descending',
+							},
+						],
+					}),
+				catch: e => new Response(e.message, { status: 500 }),
+			}),
+		Effect.map(formateResponse),
+		Effect.runPromise
+	);
 };
 
 export { getPosts };
