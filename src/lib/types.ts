@@ -1,7 +1,7 @@
-interface Posts {
+interface DiscordBlock {
 	name: string;
 	url: string;
 	tags: string[];
 }
 
-export { Posts };
+export { DiscordBlock };

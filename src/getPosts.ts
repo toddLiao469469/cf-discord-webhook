@@ -1,7 +1,7 @@
 import { Client } from '@notionhq/client';
 import { Effect, pipe } from 'effect';
 
-import { Posts } from './lib/types';
+import { DiscordBlock } from './lib/types';
 
 function getRandomDateInRange(minDate: Date, maxDate: Date): Date {
 	const minTimestamp = minDate.getTime();
@@ -19,7 +19,7 @@ const randomStartDate = pipe(
 
 const randomEndDate = pipe(randomStartDate, date => getRandomDateInRange(date, new Date()));
 
-const formateResponse = (data: unknown): Posts[] => {
+const formateResponse = (data: unknown): DiscordBlock[] => {
 	return data.results.map((result: unknown) => ({
 		name: result.properties.Name.title[0].plain_text,
 		url: result.url,
@@ -28,7 +28,7 @@ const formateResponse = (data: unknown): Posts[] => {
 	}));
 };
 
-const getPosts = async (token: string, dataBaseId: string) => {
+const getPosts = async (token: string, dataBaseId: string): Promise<DiscordBlock[]> => {
 	return pipe(
 		new Client({
 			auth: token,

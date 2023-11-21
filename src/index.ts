@@ -12,6 +12,14 @@ router.get('/posts', async (request, env, context) => {
 	return new Response(`${JSON.stringify(result)}`, { status: 200 });
 });
 
+router.get('/discussion', async (request, env, context) => {
+	const result = await getPosts(env.NOTION_TOKEN, env.NOTION_DATABASE_ID);
+
+	await sendMessage({ message: '新的文章留言', data: result }, env.DISCORD_WEBHOOK_URL);
+
+	return new Response(`${JSON.stringify(result)}`, { status: 200 });
+});
+
 router.all('*', () => new Response('404, not found!', { status: 404 }));
 
 export default {
