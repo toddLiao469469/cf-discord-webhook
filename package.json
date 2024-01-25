@@ -12,7 +12,8 @@
 		"@cloudflare/workers-types": "^4.20230518.0 ",
 		"typescript": "5.2.2",
 		"vitest": "^0.31.0",
-		"wrangler": "^3.0.0"
+		"wrangler": "^3.0.0",
+		"hono":"^3.12.6"
 	},
 	"dependencies": {
 		"@nestjs/cli": "^10.1.15",
