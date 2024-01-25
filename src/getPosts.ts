@@ -1,7 +1,7 @@
 import { Client } from '@notionhq/client';
 import { Effect, pipe } from 'effect';
 
-import { Posts } from './lib/types';
+import { NotionQueryResponse, Posts, notionQueryResponseSchema } from './lib/types';
 
 function getRandomDateInRange(minDate: Date, maxDate: Date): Date {
 	const minTimestamp = minDate.getTime();
@@ -12,19 +12,12 @@ function getRandomDateInRange(minDate: Date, maxDate: Date): Date {
 	return new Date(randomTimestamp);
 }
 
-const randomStartDate = pipe(
-	[new Date('2020-01-01'), new Date()] satisfies [Date, Date],
-	([minDate, maxDate]) => getRandomDateInRange(minDate, maxDate)
-);
-
-const randomEndDate = pipe(randomStartDate, date => getRandomDateInRange(date, new Date()));
-
-const formateResponse = (data: unknown): Posts[] => {
-	return data.results.map((result: unknown) => ({
+const formateResponse = (data: NotionQueryResponse): Posts[] => {
+	return data.results.map(result => ({
 		name: result.properties.Name.title[0].plain_text,
 		url: result.url,
 		originUrl: result.properties.URL.url,
-		tags: result.properties.Tags.multi_select.map((item: unknown) => item.name),
+		tags: result.properties.Tags.multi_select.map(item => item.name),
 	}));
 };
 
@@ -35,8 +28,17 @@ const getPosts = async (token: string, dataBaseId: string) => {
 		}),
 		client =>
 			Effect.tryPromise({
-				try: () =>
-					client.databases.query({
+				try: () => {
+					const randomStartDate = pipe(
+						[new Date('2020-01-01'), new Date()] satisfies [Date, Date],
+						([minDate, maxDate]) => getRandomDateInRange(minDate, maxDate)
+					);
+
+					const randomEndDate = pipe(randomStartDate, date =>
+						getRandomDateInRange(date, new Date())
+					);
+
+					const result = client.databases.query({
 						database_id: dataBaseId,
 						filter: {
 							property: 'Created',
@@ -52,9 +54,19 @@ const getPosts = async (token: string, dataBaseId: string) => {
 								direction: 'descending',
 							},
 						],
-					}),
+					});
+
+					return result;
+				},
 				catch: e => new Response(e.message, { status: 500 }),
 			}),
+		Effect.map(data => {
+			try {
+				return notionQueryResponseSchema.parse(data);
+			} catch (e: unknown) {
+				throw new Error('notionQueryResponseSchema parse error', e);
+			}
+		}),
 		Effect.map(formateResponse),
 		Effect.runPromise
 	);
