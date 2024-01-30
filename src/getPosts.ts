@@ -3,6 +3,8 @@ import { Effect, pipe } from 'effect';
 
 import { NotionQueryResponse, Posts, notionQueryResponseSchema } from './lib/types';
 
+const dateOffset = 24 * 60 * 60 * 1000 * 30;
+
 function getRandomDateInRange(minDate: Date, maxDate: Date): Date {
 	const minTimestamp = minDate.getTime();
 	const maxTimestamp = maxDate.getTime();
@@ -29,11 +31,12 @@ const getPosts = async (token: string, dataBaseId: string) => {
 		client =>
 			Effect.tryPromise({
 				try: () => {
+					const randomStartUpLimitDate = new Date(Date.now() - dateOffset);
+
 					const randomStartDate = pipe(
-						[new Date('2020-01-01'), new Date()] satisfies [Date, Date],
+						[new Date('2020-01-01'), randomStartUpLimitDate] satisfies [Date, Date],
 						([minDate, maxDate]) => getRandomDateInRange(minDate, maxDate)
 					);
-
 					const randomEndDate = pipe(randomStartDate, date =>
 						getRandomDateInRange(date, new Date())
 					);
